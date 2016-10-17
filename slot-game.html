@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Phaser - Slot-game</title>
+    <script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+        button{
+          margin-left: 165px;
+          margin-top: 20px;
+          background-color:#ededed;
+          border-radius:6px;
+          border:1px solid #dcdcdc;
+          display:inline-block;
+          cursor:pointer;
+          color:#777777;
+          font-family:Arial;
+          font-size:15px;
+          font-weight:bold;
+          padding:6px 24px;
+          text-decoration:none;
+          text-shadow:0px 1px 0px #ffffff;
+        }
+        button:hover{
+          background-color:#dfdfdf;
+        }
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+      var game = new Phaser.Game(436, 329, Phaser.AUTO, 'slot-game', { preload: preload, create: create, update: update});
+      function preload() {
+
+        game.load.image('slot-machine', 'img/slotmachine.png');
+        game.load.image('bar', 'img/bar.png');
+        game.load.image('bell', 'img/bell.png');
+        game.load.image('cherry', 'img/cherry.png');
+        game.load.image('orange', 'img/orange.png');
+        game.load.image('plum', 'img/plum.png');
+        game.load.image('seven', 'img/seven.png');
+
+      }
+
+
+      var slots_cnt = 4;
+      var slotsColoumns = [];
+      var slots = [[],[],[]];
+
+      var symbol_height = 100;
+
+      var reels_start_delay = 500;
+      var reels_rotation_time = 3000;
+      var reels_cnt = 3;
+      var reel_start_y = -80;
+      var reel_end_y = 20;
+      var create_reels = [{x:20, y:-80}, {x:157, y:-80}, {x:293, y:-80}];
+      var reels = [
+        ['bar', 'bell', 'cherry', 'orange', 'plum', 'seven'],
+        ['bar', 'bell', 'cherry', 'orange', 'plum', 'seven'],
+        ['bar', 'bell', 'cherry', 'orange', 'plum', 'seven']
+      ];
+
+      function create() {
+
+        game.physics.startSystem(Phaser.Physics.ARCADE);
+        game.stage.backgroundColor = "#ffffff";
+
+        for(var i=0; i<create_reels.length; ++i){
+          createReel(i,create_reels[i].x, create_reels[i].y)
+        }
+
+        game.add.sprite(0, 0, 'slot-machine');
+        spineButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+      }
+
+      function createReel(index, x, y) {
+        slotsColoumns[index] = game.add.group();
+        slotsColoumns[index].x=x;
+        slotsColoumns[index].y=y;
+        for(var i=0; i<slots_cnt; ++i){
+          slots[index][i] = slotsColoumns[index].create(0, i*symbol_height, reels[index][i+2]);
+        }
+      }
+
+      function update() {
+      }
+
+      function rotateArray() {
+          var rotate = setInterval(function(){
+            for(var i=0; i<reels_cnt; ++i){
+              setTimeout(function(i){slotsColoumns[i].y += 3;
+                if(slotsColoumns[i].y>reel_end_y){
+                  slotsColoumns[i].y = reel_start_y;
+
+                  var element = reels[i].pop();
+                  reels[i].unshift(element);
+                  for(var j=0; j<slots_cnt; ++j){
+                    slots[i][j].loadTexture(reels[i][j+2], 0);
+                  }
+
+                }},i*reels_start_delay,i);
+            }
+        },0);
+
+        document.getElementById("spineBtn").disabled = true;
+
+        setTimeout(function() {
+          clearInterval(rotate);
+        }, reels_rotation_time);
+      }
+
+      function resetReels(){
+        for(var i=0; i<reels_cnt; ++i){
+          setTimeout(function(i){
+          if (slotsColoumns[i].y<reel_end_y && slotsColoumns[i].y>reel_start_y) {
+            var tween = game.add.tween(slotsColoumns[i]).to( { y: reel_end_y }, 500, Phaser.Easing.Linear.None, true);
+            document.getElementById("spineBtn").disabled = false;
+          }},(reels_rotation_time+1) + reels_start_delay*i, i);
+        }
+      }
+
+    </script>
+    <div id="slot-game"></div>
+    <button id="spineBtn" onclick="rotateArray()" onmouseup="resetReels()">Spin</button>
+  </body>
+</html>
